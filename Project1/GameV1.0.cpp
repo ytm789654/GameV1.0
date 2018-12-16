@@ -3,13 +3,18 @@
 
 #include <iostream>
 #include "Player.h"
-
+#include "EnemyGroup.h"
+#include "Battle.h"
 using namespace std;
 int main()
 {
     cout << "Hello World!\n"; 
 	Player* pPlayer = new Player();
+	EnemyGroup* Enemies = new EnemyGroup();
+	Battle *TestBattle = new Battle(pPlayer, Enemies);
 	delete pPlayer;
+	delete Enemies;
+	delete TestBattle;
 	int pause;
 	cin >> pause;
 }

@@ -1,7 +1,11 @@
 #pragma once
+#define MaxActionBarValue 1000
+#define PlayerCamp 1
+#define EnemyCamp 0 
 #include <iostream>
 #include <vector>
 #include <string>
+
 using namespace std;
 
 /*
@@ -10,15 +14,28 @@ using namespace std;
 class RoleBase
 {
 public:
-	RoleBase(string _name,int _HpMax = 500,int _MpMax = 500, int _ATK = 50, int _DEF = 20)
-		:m_name(_name), m_HpMax(_HpMax),m_Hp(_HpMax),m_MpMax(_MpMax),m_Mp(m_MpMax),m_ATK(_ATK),m_DEF(_DEF),m_Alive(true)
+	RoleBase(string _name,int _HpMax = 500,int _MpMax = 500, int _ATK = 50, int _DEF = 20,int _Speed = 30)
+		:m_name(_name), m_HpMax(_HpMax),m_Hp(_HpMax),m_MpMax(_MpMax),m_Mp(m_MpMax),m_ATK(_ATK),m_DEF(_DEF),m_Alive(true),m_Speed(_Speed)
 	{
-		cout << "Role " << m_name << " is created!" << endl;
+		cout << " Role " << m_name << " is created!" << endl;
+	}
+
+	RoleBase(RoleBase *Role)
+	{
+		m_name = Role->GetName();
+		m_HpMax = Role->GetHpMax();
+		m_Hp = Role->GetHp();
+		m_MpMax = Role->GetMpMax();
+		m_Mp = Role->GetMp();
+		m_ATK = Role->GetATK();
+		m_DEF = Role->GetDEF();
+		m_Speed = Role->GetSpeed();
+		m_Alive = true;
 	}
 
 	~RoleBase()
 	{
-		cout << "destroy role " << m_name << endl;
+		cout << " destroy role " << m_name << endl;
 	}
 
 	string GetName()
@@ -31,7 +48,7 @@ public:
 		m_name = _name;
 	}
 
-	int GetHpMap()
+	int GetHpMax()
 	{
 		return m_HpMax;
 	}
@@ -158,15 +175,28 @@ protected:				//为了子类能够访问，定义成protected
 	int m_ATK;
 	int m_DEF;
 	int m_Speed;
-	int m_ActionValue;	//行动值，每一个时间周期计算一次，跟速度相关，当行动值大于一个值时该角色行动一次。
 	bool m_Alive;
 };
 
 class BattleRole :public RoleBase
 {
 public:
+	BattleRole(RoleBase* Role, int _Camp)			//根据玩家的角色数据创建BattleRole，如果玩家的role类型改了，这里参数类型也要改。
+		:RoleBase(Role)
+	{
+		m_ActionValue = 0;
+		m_Camp = _Camp;
+	}
+
+	BattleRole(string _name,  int _Camp , int _HpMax = 500, int _MpMax = 500, int _ATK = 50, int _DEF = 20, int _Speed = 30)
+		:RoleBase(_name,_HpMax,_MpMax,_ATK,_DEF,_Speed)
+	{
+		m_ActionValue = 0;
+		m_Camp = _Camp;
+	}
 	virtual void Attack(BattleRole * Obj)		//攻击Obj
 	{
+		cout << m_name << " attck " << Obj->GetName() << endl;
 		Obj->BeAttacked(this);
 	}
 
@@ -174,7 +204,10 @@ public:
 	{
 		int damage = Obj->GetATK() - m_DEF;
 		ReduceHp(damage);
-		m_Alive = IsDead();
+		cout << m_name << " be attacked by " << Obj->GetName() << " ,damaged:" << damage << endl;
+		m_Alive = !IsDead();
+		if (!m_Alive)
+			cout << m_name << " is dead!" << endl;
 	}
 
 	int GetActionValue()
@@ -199,4 +232,19 @@ public:
 	{
 		SetActionValue(m_ActionValue - _value);
 	}
+
+	void Action(vector<BattleRole*> PlayerRoles, vector<BattleRole*> EnemyRoles )		//以玩家和遇到的敌人作为参数，方便各种操作选取目标。
+	{
+		cout <<m_name<< " Action! Choose to attack !" << endl;
+		if (m_Camp == PlayerCamp)
+			for (int i = 0;i < EnemyRoles.size();i++)
+				Attack(EnemyRoles[i]);
+		if (m_Camp == EnemyCamp)
+			for (int i = 0;i < PlayerRoles.size();i++)
+				Attack(PlayerRoles[i]);
+	}
+
+private:
+	int m_ActionValue;	//行动值，每一个时间周期计算一次，跟速度相关，当行动值大于一个值时该角色行动一次。
+	int m_Camp;	//阵营 1 为玩家，0为敌人
 };
